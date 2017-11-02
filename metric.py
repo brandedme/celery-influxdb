@@ -34,22 +34,28 @@ Usage:
 
 """
 
+import logging
 import os
 import random
+from typing import Union
 
 from telegraf.client import TelegrafClient
 
+log = logging.getLogger(__name__)
+
+TELEGRAF_HOST = os.environ.get('TELEGRAF_HOST', '127.0.0.1'),
+TELEGRAF_PORT = int(os.environ.get('TELEGRAF_PORT', 8092)),
+
 # It's UPD, so it should be safe to create it initially
-metric_client = TelegrafClient(
-    host=os.environ.get('TELEGRAF_HOST', '127.0.0.1'),
-    port=int(os.environ.get('TELEGRAF_PORT', 8092)),
-)
+metric_client = TelegrafClient(host=TELEGRAF_HOST, port=TELEGRAF_PORT)
+log.info(f'Connecting to {TELEGRAF_HOST}:{TELEGRAF_PORT}')
 
 
-def metric(metric_name, values, tags=None, sample_rate=1):
+def metric(metric_name: str, values: Union[int, float, dict], tags: dict = None, sample_rate=1):
     """
     Submit single metric with one or several values.
 
+    :param metric_name: Name of metric to report
     :param values: Can be a single value (int or float) or dict of {name: value}.
     :param tags: dict of tags to apply to this metric
     :param float sample_rate: sample rate (1 - send all, 0 - don't send)
