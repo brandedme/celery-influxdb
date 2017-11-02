@@ -62,21 +62,11 @@ class Redis(BrokerBase):
             raise ValueError('Priority not in priority steps')
         return '{0}{1}{2}'.format(*((queue, self.sep, pri) if pri else (queue, '', '')))
 
-    def get_queues(self) -> List[str]:
-        return [str(itm) for itm in self.redis.keys()]
-
     def itercounts(self) -> Iterator[Tuple[str, int]]:
-        queues = self.get_queues()
-
-        def count(name: str) -> int:
-            return sum([
-                self.redis.llen(x)
-                for x in [self._q_for_pri(name, pri) for pri in self.priority_steps]
-            ])
-
-        for name in queues:
+        for name in self.redis.keys():
+            name = name.decode('utf-8')
             try:
-                value = count(name)
+                value = self.redis.llen(name)
             except:
                 if name not in self.last_values:  # Skip unknown empty queues
                     continue
