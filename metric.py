@@ -43,8 +43,8 @@ from telegraf.client import TelegrafClient
 
 log = logging.getLogger(__name__)
 
-TELEGRAF_HOST = os.environ.get('TELEGRAF_HOST', '127.0.0.1'),
-TELEGRAF_PORT = int(os.environ.get('TELEGRAF_PORT', 8092)),
+TELEGRAF_HOST = os.environ.get('TELEGRAF_HOST', '127.0.0.1')
+TELEGRAF_PORT = int(os.environ.get('TELEGRAF_PORT', 8092))
 
 # It's UPD, so it should be safe to create it initially
 metric_client = TelegrafClient(host=TELEGRAF_HOST, port=TELEGRAF_PORT)
