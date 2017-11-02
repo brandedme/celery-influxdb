@@ -63,7 +63,7 @@ class Redis(BrokerBase):
         return '{0}{1}{2}'.format(*((queue, self.sep, pri) if pri else (queue, '', '')))
 
     def get_queues(self) -> List[str]:
-        return self.redis.keys()
+        return list(self.redis.keys())
 
     def itercounts(self) -> Iterator[Tuple[str, int]]:
         queues = self.get_queues()
