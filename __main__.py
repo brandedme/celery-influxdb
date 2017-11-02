@@ -2,11 +2,11 @@ import logging
 import os
 import signal
 import sys
-from Queue import Empty
-from multiprocessing.queues import Queue
+from queue import Empty, Queue
+# from multiprocessing.queues import Queue
 
 from backend.influx import QueueStats, TaskStats
-from queue import CeleryQueue
+from qmgr import CeleryQueue
 
 debug = os.environ.get('DEBUG', False) in ['true', 'yes', '1', 'True', 'Yes', 'Y', 'y']
 logging.basicConfig(level=logging.INFO if not debug else logging.DEBUG)
