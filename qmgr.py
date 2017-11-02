@@ -1,10 +1,8 @@
 import datetime
-import json
 import logging
 import os
 import time
 from collections import defaultdict
-from multiprocessing import Event, Process
 from threading import Thread
 
 from celery import Celery
@@ -17,7 +15,6 @@ from broker import Redis
 from metric import metric
 
 logger = logging.getLogger(__name__)
-
 
 TASK_METRIC_NAME = 'celery_task'
 QUEUE_METRIC_NAME = 'celery_queue'
@@ -122,6 +119,7 @@ class CeleryRecorder(Polaroid):
                         worker=worker,
                         state=state,
                     )
+                    logger.debug(f'Reporting tags: {tags} with values: {values}')
                     metric(TASK_METRIC_NAME, values, tags)
 
     def report_queues(self):
