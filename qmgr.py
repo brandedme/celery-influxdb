@@ -14,8 +14,13 @@ from celery.events.snapshot import Polaroid
 from celery.events.state import State
 
 from broker import Redis
+from metric import metric
 
 logger = logging.getLogger(__name__)
+
+
+TASK_METRIC_NAME = 'celery_task'
+QUEUE_METRIC_NAME = 'celery_queue'
 
 
 def reavg(old, count, delta):
@@ -47,10 +52,6 @@ class CeleryRecorder(Polaroid):
     clear_after = True
     redis = Redis(CeleryConfig.BROKER_URL)
 
-    def __init__(self, queue, *args, **kwargs):
-        self.queue = queue
-        super(CeleryRecorder, self).__init__(*args, **kwargs)
-
     def on_shutter(self, state):
         try:
             self.gather_data(state)
@@ -58,8 +59,11 @@ class CeleryRecorder(Polaroid):
             logger.exception(str(ex))
 
     def gather_data(self, state):
-        now = datetime.datetime.utcnow()
+        tasks = self.gather_tasks(state)
+        self.report_tasks(tasks)
+        self.report_queues()
 
+    def gather_tasks(self, state):
         counts = defaultdict(  # Worker
             lambda: defaultdict(  # Task name
                 lambda: defaultdict(  # Task state
@@ -100,21 +104,33 @@ class CeleryRecorder(Polaroid):
 
         logger.debug("Gathered %s celery tasks", tasks)
 
-        self.queue.put({
-            'now': now,
-            'tasks': json.loads(json.dumps(counts)),
-            'queues': dict(self.redis.itercounts()),
-        })
+        return counts
+
+    def report_tasks(self, counts):
+        for worker, tasks in counts.items():
+            for name, states in tasks.items():
+                for state, counts in states.items():
+                    values = dict(
+                        count=counts['count'],
+                        avg_exec_in_millis=counts['avg_exec'],
+                        max_exec_in_millis=counts['max_exec'],
+                        avg_wait_in_millis=counts['avg_wait'],
+                        max_wait_in_millis=counts['max_wait'],
+                    )
+                    tags = dict(
+                        name=name,
+                        worker=worker,
+                        state=state,
+                    )
+                    metric(TASK_METRIC_NAME, values, tags)
+
+    def report_queues(self):
+        for name, count in self.redis.itercounts():
+            metric(QUEUE_METRIC_NAME, {'count': count}, {'queue': name})
 
 
-class CeleryQueue(Process):
-    _running = Event()
-
-    def __init__(self, queue, *args, **kwargs):
-        self.queue = queue
-        super(CeleryQueue, self).__init__(*args, **kwargs)
-
-    def run(self):
+class CeleryQueue(object):
+    def __init__(self):
         self.celery = Celery()
         self.celery.config_from_object(CeleryConfig)
         self.control = Control(self.celery)
@@ -124,21 +140,18 @@ class CeleryQueue(Process):
         self.last_query = datetime.datetime.utcnow()
 
         self.consumer = CeleryConsumer(self.state, self.celery)
+
+    def run(self):
         self.consumer.start()
 
         logger.info("Celery monitor started")
 
         freq = float(os.environ.get('FREQUENCY', 10))
-        with CeleryRecorder(self.queue, self.state, freq=freq):
-            while not self._running.is_set():
+        with CeleryRecorder(self.state, freq=freq):
+            while True:
                 time.sleep(.1)
 
                 # Periodically re-enable celery control events
                 if (datetime.datetime.utcnow() - self.enable_event).total_seconds() > 600:
                     self.control.enable_events()
-                    self.enable_events = datetime.datetime.utcnow()
-
-        logger.info('Celery monitor stopped')
-
-    def stop(self):
-        self._running.set()
+                    self.enable_event = datetime.datetime.utcnow()

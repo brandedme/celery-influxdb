@@ -1,3 +1,4 @@
 celery
 influxdb
 redis
+pytelegraf
