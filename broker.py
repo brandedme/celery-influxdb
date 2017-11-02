@@ -1,6 +1,5 @@
-import logging
 import numbers
-from typing import Iterator, List, Tuple, Union
+from typing import Iterator, Tuple, Union
 
 try:
     import redis
@@ -12,10 +11,6 @@ try:
 except ImportError:
     from urlparse import urlparse, urljoin
     from urllib import quote, unquote
-
-DEFAULT_REDIS_PRIORITY_STEPS = [0, 3, 6, 9]
-
-logger = logging.getLogger(__name__)
 
 
 class BrokerBase(object):
@@ -36,7 +31,7 @@ class Redis(BrokerBase):
     sep = '\x06\x16'
     last_values = {}
 
-    def __init__(self, broker_url: str, *_, broker_options: dict = None, **__):
+    def __init__(self, broker_url: str, *_, **__):
         super(Redis, self).__init__(broker_url)
         self.host = self.host or 'localhost'
         self.port = self.port or 6379
@@ -51,16 +46,6 @@ class Redis(BrokerBase):
             db=self.vhost,
             password=self.password,
         )
-
-        if broker_options and 'priority_steps' in broker_options:
-            self.priority_steps = broker_options['priority_steps']
-        else:
-            self.priority_steps = DEFAULT_REDIS_PRIORITY_STEPS
-
-    def _q_for_pri(self, queue: str, pri: int) -> str:
-        if pri not in self.priority_steps:
-            raise ValueError('Priority not in priority steps')
-        return '{0}{1}{2}'.format(*((queue, self.sep, pri) if pri else (queue, '', '')))
 
     def itercounts(self) -> Iterator[Tuple[str, int]]:
         for name in self.redis.keys():
