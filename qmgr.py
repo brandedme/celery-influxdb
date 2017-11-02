@@ -78,7 +78,7 @@ class CeleryRecorder(Polaroid):
         tasks = 0
 
         # Gather stats
-        for uuid, task in self.state.tasks_by_time():
+        for uuid, task in state.tasks_by_time():
             tasks += 1
 
             worker = task.worker.hostname if task.worker else ''
