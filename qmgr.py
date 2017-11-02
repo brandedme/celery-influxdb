@@ -134,7 +134,7 @@ class CeleryQueue(Process):
                 time.sleep(.1)
 
                 # Periodically re-enable celery control events
-                if (datetime.datetime.utcnow() - self.enable_event).total_seconds > 600:
+                if (datetime.datetime.utcnow() - self.enable_event).total_seconds() > 600:
                     self.control.enable_events()
                     self.enable_events = datetime.datetime.utcnow()
 
