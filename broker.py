@@ -1,6 +1,6 @@
 import logging
 import numbers
-from typing import Generator, List, Tuple, Union
+from typing import Iterator, List, Tuple, Union
 
 try:
     import redis
@@ -65,7 +65,7 @@ class Redis(BrokerBase):
     def get_queues(self) -> List[str]:
         return self.redis.keys()
 
-    def itercounts(self) -> Generator[Tuple[str, int]]:
+    def itercounts(self) -> Iterator[Tuple[str, int]]:
         queues = self.get_queues()
 
         def count(name: str) -> int:
