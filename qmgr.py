@@ -57,6 +57,10 @@ class CeleryRecorder(Polaroid):
 
     def gather_data(self, state):
         tasks = self.gather_tasks(state)
+        if not tasks:
+            logger.error('Palariod ran out of drafts. No data collected. Will die now.')
+            os._exit(os.EX_TEMPFAIL)
+
         self.report_tasks(tasks)
         self.report_queues()
 
