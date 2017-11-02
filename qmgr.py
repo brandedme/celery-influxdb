@@ -124,6 +124,7 @@ class CeleryRecorder(Polaroid):
 
     def report_queues(self):
         for name, count in self.redis.itercounts():
+            logger.debug(f'Reporting queue {name} with count {count}')
             metric(QUEUE_METRIC_NAME, {'count': count}, {'queue': name})
 
 
