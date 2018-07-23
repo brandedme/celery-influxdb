@@ -19,8 +19,8 @@ logging.basicConfig(level=logging.INFO if not debug else logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
-TASK_METRIC_NAME = 'celery_task'
-QUEUE_METRIC_NAME = 'celery_queue'
+TASK_METRIC_NAME = os.environ.get('TASK_METRIC_NAME', 'celery_task')
+QUEUE_METRIC_NAME = os.environ.get('QUEUE_METRIC_NAME', 'celery_queue')
 
 
 def reavg(old, count, delta):
