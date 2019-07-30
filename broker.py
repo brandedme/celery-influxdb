@@ -3,6 +3,7 @@ import numbers
 
 try:
     import redis
+    import redis.exceptions
 except ImportError:
     redis = None
 
@@ -75,6 +76,8 @@ class Redis(BrokerBase):
             try:
                 value = self.redis.llen(name)
                 logger.debug('Found %s items in queue %s', value, name)
+            except redis.exceptions.ResponseError:
+                continue
             except:
                 logger.exception('Failed to fetch queue counts')
                 if name not in self.last_values:  # Skip unknown empty queues
