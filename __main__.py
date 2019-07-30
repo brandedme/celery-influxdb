@@ -147,8 +147,15 @@ class Submitter(Greenlet):
 
                 heartbeats = set()
 
-                QueueStats.commit()
-                WorkerStats.commit()
+                try:
+                    QueueStats.commit()
+                except AttributeError:  # Raised when there were no events committed to the stats collector
+                    pass
+
+                try:
+                    WorkerStats.commit()
+                except AttributeError:  # Raised when there were no events committed to the stats collector
+                    pass
             except (KeyboardInterrupt, SystemExit):
                 return
             except Exception as ex:
