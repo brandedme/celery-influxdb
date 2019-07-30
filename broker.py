@@ -70,16 +70,10 @@ class Redis(BrokerBase):
     def itercounts(self):
         queues = self.get_queues()
 
-        def count(name):
-            return sum([
-                self.redis.llen(x)
-                for x in [self._q_for_pri(name, pri) for pri in self.priority_steps]
-            ])
-
         submitted = set()
         for name in queues:
             try:
-                value = count(name)
+                value = self.redis.llen(name)
                 logger.debug('Found %s items in queue %s', value, name)
             except:
                 logger.exception('Failed to fetch queue counts')
